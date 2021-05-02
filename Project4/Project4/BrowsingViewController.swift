@@ -9,12 +9,13 @@ import UIKit
 import WebKit
 
 
-class ViewController:
+class BrowsingViewController:
     UIViewController,
     WKNavigationDelegate {
     var webView: WKWebView!
     var progressView: UIProgressView!
-    var websites = ["apple.com", "google.com"]
+    var websites = allowedWebsites
+    var initialWebsite: String!
     
     override func loadView() {
         self.webView = WKWebView()
@@ -35,13 +36,15 @@ class ViewController:
         self.progressView = UIProgressView(progressViewStyle: .default)
         self.progressView.sizeToFit()
         let progressButton = UIBarButtonItem(customView: progressView)
+        let backButton = UIBarButtonItem(title: "Back", style: .plain, target: self, action: #selector(webView.goBack))
+        let forwardButton = UIBarButtonItem(title: "Forward", style: .plain, target: self, action: #selector(webView.goForward))
         
-        self.toolbarItems = [progressButton, spacer, refresh]
+        self.toolbarItems = [backButton,forwardButton, spacer, progressButton, spacer, refresh]
         self.navigationController?.isToolbarHidden = false
-        
         self.webView.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
         
-        let url = URL(string: self.websites[0])!
+        print("self.initialWebsite: \(self.initialWebsite!)")
+        let url = URL(string: "https://" + self.initialWebsite)!
         self.webView.load(URLRequest(url: url))
         self.webView.allowsBackForwardNavigationGestures = true
     }
@@ -86,8 +89,14 @@ class ViewController:
                     return
                 }
             }
+            let ac = UIAlertController(title: "This website is not authorized", message: host, preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "Cancel", style: .default, handler: .none))
+            present(ac, animated: true)
+            decisionHandler(.cancel)
+            return
         }
         decisionHandler(.cancel)
+        return
     }
 }
 
